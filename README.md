@@ -19,6 +19,13 @@ Subsocks is a secure Socks5 proxy. It encapsulate Socks5 in other security proto
 - [x] HTTP authorization
 - [x] Smart proxy
 
+## jwt-version
+
+This version focuses on HTTP authorization, following these steps:
+1. Users must obtain a JWT(JSON Web Token) by providing their username and password through Zitadel.
+2. The JWT describes the user's proxy access rules.
+3. The JWT must be included in the `Authorization` header of the request for the access point to validate.
+
 ## Installation
 
 ### go get
