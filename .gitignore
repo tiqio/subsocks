@@ -2,3 +2,4 @@ subsocks
 targets/
 .proxy-cache
 .idea
+.env
