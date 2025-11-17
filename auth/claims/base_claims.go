@@ -28,7 +28,6 @@ func NewBaseClaims(claims *jwt.MapClaims) *BaseClaims {
 
 func (b *BaseClaims) ParseClaims() {
 	b.parseOnly.Do(func() {
-		log.Debug("get access Debugs")
 		if mapClaims, ok := b.claims.(*jwt.MapClaims); ok {
 			jwtPayload := (*mapClaims)["urn:zitadel:iam:user:metadata"]
 			if metadataMap, ok := jwtPayload.(map[string]interface{}); ok {

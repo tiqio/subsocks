@@ -49,9 +49,9 @@ func init() {
 	log.Init("", getEnv("LOG_LEVEL"))
 }
 
-func GetJWTInfo() (*JWTInfo, error) {
+func GetJWTInfo(zitadelTokenUrl string, clientId string, clientSecret string) (*JWTInfo, error) {
 	// Encode the client ID and client Secret in Base64
-	clientCredentials := fmt.Sprintf("%s:%s", CLIENT_ID, CLIENT_SECRET)
+	clientCredentials := fmt.Sprintf("%s:%s", clientId, clientSecret)
 	base64ClientCredentials := base64.StdEncoding.EncodeToString([]byte(clientCredentials))
 
 	// Prepare the request headers
@@ -64,7 +64,7 @@ func GetJWTInfo() (*JWTInfo, error) {
 	data := fmt.Sprintf("grant_type=client_credentials&scope=openid profile email urn:zitadel:iam:org:project:id:%s:aud urn:zitadel:iam:org:projects:roles urn:zitadel:iam:user:metadata", PROJECT_ID)
 
 	// Create a new request
-	req, err := http.NewRequest("POST", ZITADEL_TOKEN_URL, bytes.NewBuffer([]byte(data)))
+	req, err := http.NewRequest("POST", zitadelTokenUrl, bytes.NewBuffer([]byte(data)))
 	if err != nil {
 		log.Error("Error creating request")
 	}
