@@ -1,5 +1,7 @@
 package main
 
+import "sort"
+
 type AccessTree struct {
 	ServiceTrees []ServiceTree
 	ServiceIds   map[string]struct{}
@@ -32,9 +34,9 @@ func (jwtInfo *JWTInfo) AccessTree() AccessTree {
 	}
 
 	for _, accessInfo := range jwtInfo.AccessTokenClaims.GetAccessInfos() {
-		for idx, service := range accessInfo.Services {
+		for _, service := range accessInfo.Services {
 			if accessTree.HasService(service.Id) {
-				for _, serviceTree := range accessTree.ServiceTrees {
+				for idx, serviceTree := range accessTree.ServiceTrees {
 					if serviceTree.Id != service.Id {
 						continue
 					}
@@ -58,6 +60,10 @@ func (jwtInfo *JWTInfo) AccessTree() AccessTree {
 						}
 						accesses = append(accesses, newAccess)
 						accessTree.ServiceTrees[idx].Accesses = accesses
+						sort.Slice(accessTree.ServiceTrees[idx].Accesses, func(i, j int) bool {
+							return accessTree.ServiceTrees[idx].Accesses[i].Delay <
+								accessTree.ServiceTrees[idx].Accesses[j].Delay
+						})
 					}
 				}
 			} else {

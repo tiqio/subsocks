@@ -71,3 +71,134 @@ func TestAccessTree(t *testing.T) {
 
 	assert.Equal(t, expectedAccessTree, accessTree)
 }
+
+func TestAccessTree_WithSwitch(t *testing.T) {
+	jwtInfo := NewJWTInfo(&JWTResponse{})
+
+	var accessInfos = []claims.AccessInfo{
+		{
+			Id: "yyy1",
+			Services: []claims.Service{
+				{
+					Id:    "zzz2",
+					Delay: 120,
+				},
+				{
+					Id:    "zzz1",
+					Delay: 100,
+				},
+			},
+		},
+		{
+			Id: "yyy2",
+			Services: []claims.Service{
+				{
+					Id:    "zzz1",
+					Delay: 130,
+				},
+			},
+		},
+	}
+
+	jwtInfo.AccessTokenClaims.SetAccessInfos(accessInfos)
+
+	accessTree := jwtInfo.AccessTree()
+
+	expectedAccessTree := AccessTree{
+		ServiceIds: map[string]struct{}{
+			"zzz1": {},
+			"zzz2": {},
+		},
+		ServiceTrees: []ServiceTree{
+			{
+				Id: "zzz2",
+				Accesses: []Access{
+					{
+						Id:    "yyy1",
+						Delay: 120,
+					},
+				},
+			},
+			{
+				Id: "zzz1",
+				Accesses: []Access{
+					{
+						Id:    "yyy1",
+						Delay: 100,
+					},
+					{
+						Id:    "yyy2",
+						Delay: 130,
+					},
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expectedAccessTree, accessTree)
+}
+
+func TestAccessTree_WithSort(t *testing.T) {
+	jwtInfo := NewJWTInfo(&JWTResponse{})
+
+	var accessInfos = []claims.AccessInfo{
+		{
+			Id: "yyy1",
+			Services: []claims.Service{
+				{
+					Id:    "zzz1",
+					Delay: 150,
+				}, {
+					Id:    "zzz2",
+					Delay: 120,
+				},
+			},
+		},
+		{
+			Id: "yyy2",
+			Services: []claims.Service{
+				{
+					Id:    "zzz1",
+					Delay: 130,
+				},
+			},
+		},
+	}
+
+	jwtInfo.AccessTokenClaims.SetAccessInfos(accessInfos)
+
+	accessTree := jwtInfo.AccessTree()
+
+	expectedAccessTree := AccessTree{
+		ServiceIds: map[string]struct{}{
+			"zzz1": {},
+			"zzz2": {},
+		},
+		ServiceTrees: []ServiceTree{
+			{
+				Id: "zzz1",
+				Accesses: []Access{
+					{
+						Id:    "yyy2",
+						Delay: 130,
+					},
+					{
+						Id:    "yyy1",
+						Delay: 150,
+					},
+				},
+			},
+			{
+				Id: "zzz2",
+				Accesses: []Access{
+					{
+						Id:    "yyy1",
+						Delay: 120,
+					},
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expectedAccessTree, accessTree)
+}
