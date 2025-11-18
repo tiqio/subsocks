@@ -3,3 +3,4 @@ targets/
 .proxy-cache
 .idea
 .env
+example

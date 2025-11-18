@@ -9,12 +9,13 @@ import (
 	"net"
 	"time"
 
+	"github.com/luyuhuang/subsocks/auth"
 	"github.com/luyuhuang/subsocks/client"
 	"github.com/luyuhuang/subsocks/utils"
 	"github.com/pelletier/go-toml"
 )
 
-func launchClient(t *toml.Tree) {
+func launchClient(t *toml.Tree, jwtInfo *auth.JWTInfo) {
 	config := struct {
 		Listen   string `toml:"listen" default:"127.0.0.1:1080"`
 		Username string `toml:"username"`

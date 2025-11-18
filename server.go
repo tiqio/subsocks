@@ -11,12 +11,13 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/luyuhuang/subsocks/auth"
 	"github.com/luyuhuang/subsocks/server"
 	"github.com/luyuhuang/subsocks/utils"
 	"github.com/pelletier/go-toml"
 )
 
-func launchServer(t *toml.Tree) {
+func launchServer(t *toml.Tree, jwtInfo *auth.JWTInfo) {
 	config := struct {
 		Protocol string `toml:"protocol"`
 		Addr     string `toml:"listen"`

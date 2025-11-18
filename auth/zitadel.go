@@ -1,4 +1,4 @@
-package main
+package auth
 
 import (
 	"bytes"
@@ -26,7 +26,7 @@ var (
 func getEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
-		log.Error("Environment variable ", key, " is not set. Exiting...")
+		log.Error(fmt.Sprintf("Environment variable %s is not set. Exiting...", key))
 	}
 	return value
 }
@@ -35,6 +35,7 @@ func init() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Error("Error loading .env file")
+		return
 	}
 
 	PROJECT_ID = getEnv("PROJECT_ID")

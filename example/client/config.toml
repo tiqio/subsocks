@@ -1,0 +1,12 @@
+[auth]
+token_url = "https://zitadel-go-p36jcg.us1.zitadel.cloud/oauth/v2/token"
+client_id = "Client"
+client_secret = "5a0Nai4lRA4JXBMmEgUPDPpJUUbmr8Znzh8iHnzjrOWBe0bJc05qrTZd8o0jHtTP"
+
+[client]
+listen = "127.0.0.1:1030"
+
+server.protocol = "http"
+server.address = "SERVER_IP:1080" # replace SERVER_IP with the server IP
+
+http.path = "/proxy" # same as http.path of the server

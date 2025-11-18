@@ -1,0 +1,10 @@
+[auth]
+token_url = "https://zitadel-go-p36jcg.us1.zitadel.cloud/oauth/v2/token"
+client_id = "Access"
+client_secret = "ZBfeCRmgOkESwPyogrAzw3AcOK1AAaJMDnioxGOcWWjdpxNh7uHYhlF0bW3jXe2h"
+
+[server]
+listen = "0.0.0.0:1080"
+protocol = "http"
+
+http.path = "/proxy"
