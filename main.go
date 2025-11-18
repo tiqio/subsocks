@@ -37,22 +37,26 @@ func main() {
 		if tokenUrl, ok := authConfig.Get("token_url").(string); ok && tokenUrl != "" {
 			if clientId, ok := authConfig.Get("client_id").(string); ok && clientId != "" {
 				if clientSecret, ok := authConfig.Get("client_secret").(string); ok && clientSecret != "" {
-					log.Println("Auth configuration is valid, keep loading JWTInfo...")
+					if projectId, ok := authConfig.Get("project_id").(string); ok && projectId != "" {
+						log.Println("Auth configuration is valid, keep loading JWTInfo...")
 
-					jwtInfo, err = auth.GetJWTInfo(tokenUrl, clientId, clientSecret)
-					if err != nil {
-						log.Fatalf("Get JWT info from %s failed: %s", tokenUrl, err)
-					}
+						jwtInfo, err = auth.GetJWTInfo(tokenUrl, clientId, clientSecret, projectId)
+						if err != nil {
+							log.Fatalf("Get JWT info from %s failed: %s", tokenUrl, err)
+						}
 
-					if err = jwtInfo.GetAccessTokenClaims(); err != nil {
-						log.Fatalf("load access token claims failed: %s", err)
-					}
-					jwtInfo.AccessTokenClaims.PrintJWTClaims()
+						if err = jwtInfo.GetAccessTokenClaims(); err != nil {
+							log.Fatalf("load access token claims failed: %s", err)
+						}
+						jwtInfo.AccessTokenClaims.PrintJWTClaims()
 
-					if err = jwtInfo.GetIDTokenClaims(); err != nil {
-						log.Fatalf("load ID token claims failed: %s", err)
+						if err = jwtInfo.GetIDTokenClaims(); err != nil {
+							log.Fatalf("load ID token claims failed: %s", err)
+						}
+						jwtInfo.IDTokenClaims.PrintJWTClaims()
+					} else {
+						log.Fatalf("Missing 'project_id' in '[auth] section'")
 					}
-					jwtInfo.IDTokenClaims.PrintJWTClaims()
 				} else {
 					log.Fatalf("Missing 'client_secret' in '[auth] section'")
 				}
@@ -63,6 +67,12 @@ func main() {
 			log.Fatalf("Missing 'token_url' in '[auth] section'")
 		}
 	}
+
+	if jwtInfo == nil {
+		log.Fatalf("jwtInfo is nil'")
+	}
+	log.Printf("JWTInfo.AccessTokenClaims: %v\n", jwtInfo.AccessTokenClaims.GetAccessInfos())
+	log.Printf("JWTInfo.IDTokenClaims: %v\n", jwtInfo.IDTokenClaims.GetAccessInfos())
 
 	if c, ok := config.Get("client").(*toml.Tree); ok {
 		launchClient(c, jwtInfo)

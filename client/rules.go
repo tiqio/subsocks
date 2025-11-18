@@ -13,6 +13,7 @@ import (
 	"github.com/luyuhuang/subsocks/control/access"
 	"github.com/luyuhuang/subsocks/control/rule"
 	"github.com/luyuhuang/subsocks/control/service"
+	llog "github.com/luyuhuang/subsocks/log"
 )
 
 const (
@@ -32,7 +33,7 @@ var ruleString2Rule = map[string]int{
 }
 
 type domainNode struct {
-	rule     *rule.Info
+	ruleInfo *rule.Info
 	wild     bool
 	children map[string]*domainNode
 }
@@ -42,7 +43,7 @@ func newDomainNode() *domainNode {
 }
 
 type ipNode struct {
-	rule     *rule.Info
+	ruleInfo *rule.Info
 	bits     []byte
 	children [2]*ipNode
 }
@@ -52,7 +53,7 @@ type Rules struct {
 	domainTree *domainNode
 	ipv4Tree   *ipNode
 	ipv6Tree   *ipNode
-	other      *rule.Info
+	otherInfo  *rule.Info
 
 	mu        sync.RWMutex
 	isProxy   map[string]bool
@@ -79,18 +80,19 @@ func NewRulesFromStructMap(rules map[string]*rule.Info) (*Rules, error) {
 	r.ipv4Tree = new(ipNode)
 	r.ipv6Tree = new(ipNode)
 	r.domainTree = newDomainNode()
-	r.other = rule.NewInfo(access.Info{}, service.Info{}, "O")
+	r.otherInfo = rule.NewInfo(access.Info{}, service.Info{}, "D")
 
 	for addr, ruleInfo := range rules {
+		llog.Info("NewRulesFromStructMap", "getRuleInfo", *ruleInfo)
 		ruleLevel, ok := ruleString2Rule[ruleInfo.Rule]
 		if !ok {
-			return nil, fmt.Errorf("rule of %q got %s, want proxy|direct|auto|P|D|A", addr, ruleInfo.Rule)
+			return nil, fmt.Errorf("ruleInfo of %q got %s, want proxy|direct|auto|P|D|A", addr, ruleInfo.Rule)
 		}
 
 		ruleInfo.Level = ruleLevel
 
-		if err := setRule(r.ipv4Tree, r.ipv6Tree, r.domainTree, r.other, addr, ruleInfo); err != nil {
-			return nil, fmt.Errorf("set rule failed: %s", err)
+		if err := setRule(r.ipv4Tree, r.ipv6Tree, r.domainTree, r.otherInfo, addr, ruleInfo); err != nil {
+			return nil, fmt.Errorf("set ruleInfo failed: %s", err)
 		}
 	}
 
@@ -112,8 +114,9 @@ func (r *Rules) loadCache() error {
 }
 
 func setRule(ipv4Tree, ipv6Tree *ipNode, domainTree *domainNode, other *rule.Info, addr string, rule *rule.Info) error {
+	llog.Info("setRule", "addr", addr)
 	if addr == "*" {
-		// * default is O, and can be set by rule(D)
+		// * default is O, and can be set by ruleInfo(D)
 		other = rule
 	} else if ip := net.ParseIP(addr); ip != nil {
 		if ipv4 := ip.To4(); ipv4 != nil {
@@ -197,7 +200,7 @@ func setIPRule(root *ipNode, ip []byte, length int, rule *rule.Info) {
 		}
 
 		if node != nil {
-			node.rule = rule
+			node.ruleInfo = rule
 			break
 		}
 
@@ -206,6 +209,8 @@ func setIPRule(root *ipNode, ip []byte, length int, rule *rule.Info) {
 }
 
 func setDomainRule(p *domainNode, domain string, rule *rule.Info) error {
+	llog.Info("setDomainRule", "domain", domain)
+	llog.Info("setRule in DomainRule", "rule", rule)
 	if i := strings.IndexByte(domain, '*'); i != 0 && i != -1 ||
 		strings.Count(domain, "*") > 1 {
 		return fmt.Errorf("Domain %q contains illegal wildcards", domain)
@@ -222,13 +227,15 @@ func setDomainRule(p *domainNode, domain string, rule *rule.Info) error {
 	}
 
 	if part := parts[0]; part == "*" {
-		p.rule = rule
+		p.ruleInfo = rule
 		p.wild = true
 	} else {
 		if p.children[part] == nil {
 			p.children[part] = newDomainNode()
 		}
-		p.children[part].rule = rule
+		ruleCopy := *rule
+		llog.Info("setDomainRule", "part", part)
+		p.children[part].ruleInfo = &ruleCopy
 	}
 
 	return nil
@@ -249,8 +256,8 @@ func searchIPRule(root *ipNode, ip []byte) (rule *rule.Info) {
 			break
 		}
 
-		if j == len(p.bits)-1 && p.rule.Level != ruleNone {
-			rule = p.rule
+		if j == len(p.bits)-1 && p.ruleInfo.Level != ruleNone {
+			rule = p.ruleInfo
 		}
 
 		j++
@@ -258,17 +265,18 @@ func searchIPRule(root *ipNode, ip []byte) (rule *rule.Info) {
 	return
 }
 
-func (r *Rules) getRule(addr string) (rule *rule.Info) {
+func (r *Rules) getRule(addr string) (ruleInfo *rule.Info) {
 	r.ruleMu.RLock()
 	if ip := net.ParseIP(addr); ip != nil {
 		if ipv4 := ip.To4(); ipv4 != nil { // IPv4
-			rule = searchIPRule(r.ipv4Tree, ipv4)
+			ruleInfo = searchIPRule(r.ipv4Tree, ipv4)
 		} else { // IPv6
-			rule = searchIPRule(r.ipv6Tree, ip.To16())
+			ruleInfo = searchIPRule(r.ipv6Tree, ip.To16())
 		}
 	} else {
 		parts := strings.Split(addr, ".")
 		p := r.domainTree
+
 		for i := len(parts) - 1; i >= 0; i-- {
 			part := parts[i]
 			p = p.children[part]
@@ -276,16 +284,20 @@ func (r *Rules) getRule(addr string) (rule *rule.Info) {
 				break
 			}
 
-			if p.rule.Level != ruleNone && (p.wild || i == 0) {
-				rule = p.rule
+			llog.Info("getRule", "p.ruleInfo", p.ruleInfo)
+
+			if p.wild || i == 0 {
+				if p.ruleInfo.Level != ruleNone {
+					ruleInfo = p.ruleInfo
+				}
 			}
 		}
 	}
 	r.ruleMu.RUnlock()
 
-	if rule == nil {
-		log.Printf("failed to find rule for %s\n", addr)
-		return nil
+	if ruleInfo == nil {
+		log.Printf("failed to find ruleInfo for %s\n", addr)
+		return rule.NewInfo(access.Info{}, service.Info{}, "D")
 	}
 	return
 }

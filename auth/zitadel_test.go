@@ -8,7 +8,7 @@ import (
 )
 
 func TestGetUserInfo(t *testing.T) {
-	jwtInfo, err := GetJWTInfo(ZITADEL_TOKEN_URL, CLIENT_ID, CLIENT_SECRET)
+	jwtInfo, err := GetJWTInfo(ZITADEL_TOKEN_URL, CLIENT_ID, CLIENT_SECRET, PROJECT_ID)
 	assert.NotNil(t, jwtInfo)
 	assert.Nil(t, err)
 

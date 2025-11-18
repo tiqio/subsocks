@@ -28,6 +28,9 @@ type Access struct {
 }
 
 func (accessTree *AccessTree) AddService(serviceId string) {
+	if serviceId == "" {
+		return
+	}
 	accessTree.ServiceIds[serviceId] = struct{}{}
 }
 
@@ -38,16 +41,19 @@ func (accessTree *AccessTree) HasService(serviceId string) bool {
 
 func (accessTree *AccessTree) FillInfo() {
 	for svcIdx, service := range accessTree.ServiceTrees {
+		if service.Id == "" {
+			return
+		}
 		svcInfo, err := srv.GetInfoById(service.Id)
 		if err != nil {
-			log.Error("GetInfoById(%s) failed", service.Id, err)
+			log.Error("GetInfoById failed", service.Id, err)
 			return
 		}
 		service.ServiceInfo = svcInfo
 		for accIdx, access := range service.Accesses {
 			accInfo, err := acc.GetInfoById(access.Id)
 			if err != nil {
-				log.Error("GetInfoById(%s) failed", access.Id, err)
+				log.Error("GetInfoById failed", access.Id, err)
 				return
 			}
 			access.AccessInfo = accInfo
@@ -65,6 +71,8 @@ func (accessTree *AccessTree) ListRule() []rule.Info {
 		ruleInfo := rule.NewInfo(accessInfo, service.ServiceInfo, "P")
 		ruleInfos = append(ruleInfos, *ruleInfo)
 	}
+
+	log.Info("ListRule", "ruleInfos", ruleInfos)
 
 	return ruleInfos
 }

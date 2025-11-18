@@ -48,7 +48,7 @@ func TestRulesDomain(t *testing.T) {
 
 	for _, c := range cases {
 		if r := rule.getRule(c.addr); r != c.rule {
-			t.Fatalf("%q rule got %d, want %d", c.addr, r, c.rule)
+			t.Fatalf("%q ruleInfo got %d, want %d", c.addr, r, c.rule)
 		}
 	}
 }
@@ -84,7 +84,7 @@ func TestRulesIPv4(t *testing.T) {
 
 	for _, c := range cases {
 		if r := rule.getRule(c.addr); r != c.rule {
-			t.Fatalf("%q rule got %d, want %d", c.addr, r, c.rule)
+			t.Fatalf("%q ruleInfo got %d, want %d", c.addr, r, c.rule)
 		}
 	}
 }
@@ -113,7 +113,7 @@ func TestRulesIPv6(t *testing.T) {
 
 	for _, c := range cases {
 		if r := rule.getRule(c.addr); r != c.rule {
-			t.Fatalf("%q rule got %d, want %d", c.addr, r, c.rule)
+			t.Fatalf("%q ruleInfo got %d, want %d", c.addr, r, c.rule)
 		}
 	}
 }
@@ -151,7 +151,7 @@ func TestIPRulesOrder(t *testing.T) {
 
 	for _, c := range cases {
 		if r := rule.getRule(c.addr); r != c.rule {
-			t.Fatalf("%q rule got %d, want %d", c.addr, r, c.rule)
+			t.Fatalf("%q ruleInfo got %d, want %d", c.addr, r, c.rule)
 		}
 	}
 }
@@ -191,7 +191,7 @@ func TestRulesOther(t *testing.T) {
 
 	for _, c := range cases {
 		if r := rule.getRule(c.addr); r != c.rule {
-			t.Fatalf("%q rule got %d, want %d", c.addr, r, c.rule)
+			t.Fatalf("%q ruleInfo got %d, want %d", c.addr, r, c.rule)
 		}
 	}
 }
@@ -259,7 +259,7 @@ func TestRulesFile(t *testing.T) {
 
 	for _, c := range cases {
 		if r := rule.getRule(c.addr); r != c.rule {
-			t.Fatalf("%q rule got %d, want %d", c.addr, r, c.rule)
+			t.Fatalf("%q ruleInfo got %d, want %d", c.addr, r, c.rule)
 		}
 	}
 
@@ -278,8 +278,8 @@ func TestRulesFileIllegal(t *testing.T) {
 	f.Close()
 
 	_, err = NewRulesFromFile(path)
-	if err == nil || !strings.Contains(err.Error(), "Illegal rule") {
-		t.Fatalf("Error %q does not contain 'Illegal rule'", err)
+	if err == nil || !strings.Contains(err.Error(), "Illegal ruleInfo") {
+		t.Fatalf("Error %q does not contain 'Illegal ruleInfo'", err)
 	}
 
 	path = fmt.Sprintf("%s%crule2.txt", t.TempDir(), os.PathSeparator)

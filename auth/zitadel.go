@@ -8,19 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/joho/godotenv"
 	"github.com/luyuhuang/subsocks/log"
-)
-
-var (
-	PROJECT_ID                string
-	ZITADEL_DOMAIN            string
-	ZITADEL_TOKEN_URL         string
-	CLIENT_ID                 string
-	CLIENT_SECRET             string
-	ZITADEL_INTROSPECTION_URL string
-	API_CLIENT_ID             string
-	API_CLIENT_SECRET         string
 )
 
 func getEnv(key string) string {
@@ -33,26 +21,7 @@ func getEnv(key string) string {
 	return value
 }
 
-func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Error("Error loading .env file")
-		return
-	}
-
-	PROJECT_ID = getEnv("PROJECT_ID")
-	ZITADEL_DOMAIN = getEnv("ZITADEL_DOMAIN")
-	ZITADEL_TOKEN_URL = getEnv("ZITADEL_TOKEN_URL")
-	CLIENT_ID = getEnv("CLIENT_ID")
-	CLIENT_SECRET = getEnv("CLIENT_SECRET")
-	ZITADEL_INTROSPECTION_URL = getEnv("ZITADEL_INTROSPECTION_URL")
-	API_CLIENT_ID = getEnv("API_CLIENT_ID")
-	API_CLIENT_SECRET = getEnv("API_CLIENT_SECRET")
-
-	log.Init("", getEnv("LOG_LEVEL"))
-}
-
-func GetJWTInfo(zitadelTokenUrl string, clientId string, clientSecret string) (*JWTInfo, error) {
+func GetJWTInfo(zitadelTokenUrl string, clientId string, clientSecret string, projectId string) (*JWTInfo, error) {
 	// Encode the client ID and client Secret in Base64
 	clientCredentials := fmt.Sprintf("%s:%s", clientId, clientSecret)
 	base64ClientCredentials := base64.StdEncoding.EncodeToString([]byte(clientCredentials))
@@ -64,7 +33,7 @@ func GetJWTInfo(zitadelTokenUrl string, clientId string, clientSecret string) (*
 	}
 
 	// Prepare the request data
-	data := fmt.Sprintf("grant_type=client_credentials&scope=openid profile email urn:zitadel:iam:org:project:id:%s:aud urn:zitadel:iam:org:projects:roles urn:zitadel:iam:user:metadata", PROJECT_ID)
+	data := fmt.Sprintf("grant_type=client_credentials&scope=openid profile email urn:zitadel:iam:org:project:id:%s:aud urn:zitadel:iam:org:projects:roles urn:zitadel:iam:user:metadata", projectId)
 
 	// Create a new request
 	req, err := http.NewRequest("POST", zitadelTokenUrl, bytes.NewBuffer([]byte(data)))

@@ -55,7 +55,12 @@ func PanicF(msg string, args ...any) {
 }
 
 func DefaultHandler(level slog.Level) slog.Handler {
-	cn, _ := time.LoadLocation("Asia/Shanghai")
+	cn, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		// 处理加载时区的错误
+		fmt.Printf("Error loading time location, error: %+v", err)
+		cn = time.UTC // 或者使用默认的 UTC
+	}
 	return sf.NewFormatterHandler(sf.TimeFormatter(time.DateTime, time.UTC))(
 		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: level,
