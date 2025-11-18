@@ -26,6 +26,14 @@ This version focuses on HTTP authorization, following these steps:
 2. The JWT describes the user's proxy access rules.
 3. The JWT must be included in the `Authorization` header of the request for the access point to validate.
 
+Extra configuration for client.toml and server.toml
+```toml
+[auth]
+token_url = "[ ZITADEL_TOKEN_URL ]"
+client_id = "[ CLIENT_ID_IN_ZITADEL ]"
+client_secret = "[ CLIENT_SECRET_IN_ZITADEL ]"
+```
+
 ## Installation
 
 ### go get
