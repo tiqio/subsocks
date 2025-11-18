@@ -1,6 +1,12 @@
 package auth
 
-import "sort"
+import (
+	"sort"
+
+	acc "github.com/luyuhuang/subsocks/control/access"
+	srv "github.com/luyuhuang/subsocks/control/service"
+	"github.com/luyuhuang/subsocks/log"
+)
 
 type AccessTree struct {
 	ServiceTrees []ServiceTree
@@ -8,14 +14,16 @@ type AccessTree struct {
 }
 
 type ServiceTree struct {
-	Id       string `json:"id"`
-	Accesses Accesses
+	Id          string   `json:"id"`
+	ServiceInfo srv.Info `json:"service_info"`
+	Accesses    Accesses
 }
 
 type Accesses []Access
 type Access struct {
-	Id    string  `json:"id"`
-	Delay float64 `json:"delay"`
+	Id         string   `json:"id"`
+	AccessInfo acc.Info `json:"access_info"`
+	Delay      float64  `json:"delay"`
 }
 
 func (accessTree *AccessTree) AddService(serviceId string) {
@@ -25,6 +33,27 @@ func (accessTree *AccessTree) AddService(serviceId string) {
 func (accessTree *AccessTree) HasService(serviceId string) bool {
 	_, exists := accessTree.ServiceIds[serviceId]
 	return exists
+}
+
+func (accessTree *AccessTree) FillInfo() {
+	for svcIdx, service := range accessTree.ServiceTrees {
+		svcInfo, err := srv.GetInfoById(service.Id)
+		if err != nil {
+			log.Error("GetInfoById(%s) failed", service.Id, err)
+			return
+		}
+		service.ServiceInfo = svcInfo
+		for accIdx, access := range service.Accesses {
+			accInfo, err := acc.GetInfoById(access.Id)
+			if err != nil {
+				log.Error("GetInfoById(%s) failed", access.Id, err)
+				return
+			}
+			access.AccessInfo = accInfo
+			service.Accesses[accIdx] = access
+		}
+		accessTree.ServiceTrees[svcIdx] = service
+	}
 }
 
 func (jwtInfo *JWTInfo) AccessTree() AccessTree {

@@ -27,6 +27,8 @@ func getEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
 		log.Error(fmt.Sprintf("Environment variable %s is not set. Exiting...", key))
+	} else {
+		log.Info("Environment variable found", key, value)
 	}
 	return value
 }

@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/luyuhuang/subsocks/auth/claims"
+	acc "github.com/luyuhuang/subsocks/control/access"
+	srv "github.com/luyuhuang/subsocks/control/service"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -193,6 +195,99 @@ func TestAccessTree_WithSort(t *testing.T) {
 				Accesses: []Access{
 					{
 						Id:    "yyy1",
+						Delay: 120,
+					},
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expectedAccessTree, accessTree)
+}
+
+func TestAccessTree_FillInfo(t *testing.T) {
+	accessTree := AccessTree{
+		ServiceIds: map[string]struct{}{
+			"zzz1": {},
+			"zzz2": {},
+		},
+		ServiceTrees: []ServiceTree{
+			{
+				Id: "zzz1",
+				Accesses: []Access{
+					{
+						Id:    "yyy1",
+						Delay: 100,
+					},
+					{
+						Id:    "yyy2",
+						Delay: 130,
+					},
+				},
+			},
+			{
+				Id: "zzz2",
+				Accesses: []Access{
+					{
+						Id:    "yyy1",
+						Delay: 120,
+					},
+				},
+			},
+		},
+	}
+
+	accessTree.FillInfo()
+
+	expectedAccessTree := AccessTree{
+		ServiceIds: map[string]struct{}{
+			"zzz1": {},
+			"zzz2": {},
+		},
+		ServiceTrees: []ServiceTree{
+			{
+				Id: "zzz1",
+				ServiceInfo: srv.Info{
+					Name: "IPSB",
+					Host: "ip.sb",
+					Port: 443,
+				},
+				Accesses: []Access{
+					{
+						Id: "yyy1",
+						AccessInfo: acc.Info{
+							Name: "Ubuntu25",
+							Host: "192.168.235.128",
+							Port: 1080,
+						},
+						Delay: 100,
+					},
+					{
+						Id: "yyy2",
+						AccessInfo: acc.Info{
+							Name: "Ubuntu22",
+							Host: "192.168.235.133",
+							Port: 1080,
+						},
+						Delay: 130,
+					},
+				},
+			},
+			{
+				Id: "zzz2",
+				ServiceInfo: srv.Info{
+					Name: "YouTube",
+					Host: "www.youtube.com",
+					Port: 443,
+				},
+				Accesses: []Access{
+					{
+						Id: "yyy1",
+						AccessInfo: acc.Info{
+							Name: "Ubuntu25",
+							Host: "192.168.235.128",
+							Port: 1080,
+						},
 						Delay: 120,
 					},
 				},
