@@ -107,11 +107,11 @@ func (c *Client) handleConnect(conn net.Conn, req *socks.Request) {
 	var err error
 	var isProxy bool
 
-	if rule := c.Rules.getRule(req.Addr.Host); rule == ruleProxy {
+	if rule := c.Rules.getRule(req.Addr.Host); rule.Level == ruleProxy {
 		log.Printf(`[socks5] "connect" dial server to connect %s for %s`, req.Addr, conn.RemoteAddr())
 
 		isProxy = true
-		nextHop, err = c.dialServer()
+		nextHop, err = c.dialAccess(rule.AccessInfo)
 		if err != nil {
 			log.Printf(`[socks5] "connect" dial server failed: %s`, err)
 			if err = socks.NewReply(socks.HostUnreachable, nil).Write(conn); err != nil {
@@ -126,11 +126,11 @@ func (c *Client) handleConnect(conn net.Conn, req *socks.Request) {
 
 		nextHop, err = net.Dial("tcp", req.Addr.String())
 		if err != nil {
-			if rule == ruleAuto {
+			if rule.Level == ruleAuto {
 				log.Printf(`[socks5] "connect" dial %s failed, dial server for %s`, req.Addr, conn.RemoteAddr())
 
 				isProxy = true
-				nextHop, err = c.dialServer()
+				nextHop, err = c.dialAccess(rule.AccessInfo)
 				if err != nil {
 					log.Printf(`[socks5] "connect" dial server failed: %s`, err)
 					if err = socks.NewReply(socks.HostUnreachable, nil).Write(conn); err != nil {

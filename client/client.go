@@ -4,18 +4,23 @@ import (
 	"bufio"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net"
 
+	"github.com/luyuhuang/subsocks/auth"
+	"github.com/luyuhuang/subsocks/control/access"
 	"github.com/luyuhuang/subsocks/socks"
 )
 
 // Client holds contexts of the client
 type Client struct {
-	Config    *Config
-	TLSConfig *tls.Config
-	Rules     *Rules
+	Config     *Config
+	TLSConfig  *tls.Config
+	Rules      *Rules
+	JWTInfo    *auth.JWTInfo
+	AccessTree *auth.AccessTree
 }
 
 // NewClient creates a client
@@ -90,6 +95,37 @@ var protocol2wrapper = map[string]func(*Client, net.Conn) net.Conn{
 	"socks": (*Client).wrapSocks,
 	"ws":    (*Client).wrapWS,
 	"wss":   (*Client).wrapWSS,
+}
+
+func (c *Client) dialAccess(accessInfo access.Info) (net.Conn, error) {
+	wrapper, ok := protocol2wrapper[c.Config.ServerProtocol]
+	if !ok {
+		return nil, errors.New("Unknow protocol")
+	}
+
+	// TODO:now, it can choose selected access, only available on TCP
+	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", accessInfo.Host, accessInfo.Port))
+	if err != nil {
+		return nil, err
+	}
+	conn = wrapper(c, conn)
+
+	// handshake
+	if err := socks.WriteMethods([]byte{socks.MethodNoAuth}, conn); err != nil {
+		conn.Close()
+		return nil, err
+	}
+	buf := make([]byte, 2)
+	if _, err := io.ReadFull(conn, buf); err != nil {
+		conn.Close()
+		return nil, err
+	}
+	if buf[0] != socks.Version || buf[1] != socks.MethodNoAuth {
+		conn.Close()
+		return nil, errors.New("Handshake failed")
+	}
+
+	return conn, nil
 }
 
 func (c *Client) dialServer() (net.Conn, error) {

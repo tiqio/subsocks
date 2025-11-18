@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"log"
 	"math/big"
 	"time"
@@ -15,6 +16,9 @@ import (
 	"github.com/luyuhuang/subsocks/server"
 	"github.com/luyuhuang/subsocks/utils"
 	"github.com/pelletier/go-toml"
+
+	acc "github.com/luyuhuang/subsocks/control/access"
+	llog "github.com/luyuhuang/subsocks/log"
 )
 
 func launchServer(t *toml.Tree, jwtInfo *auth.JWTInfo) {
@@ -38,7 +42,16 @@ func launchServer(t *toml.Tree, jwtInfo *auth.JWTInfo) {
 		log.Fatalf("Parse '[server]' configuration failed: %s", err)
 	}
 
-	ser := server.NewServer(config.Protocol, config.Addr)
+	metadata := jwtInfo.AccessTokenClaims.GetMetadata()
+	info, err := acc.GetInfoById(metadata.Id)
+	if err != nil {
+		log.Fatalf("Get access info failed: %s", err)
+	}
+
+	llog.Info("Hook access address from JWT metadata", "info", info)
+
+	//ser := server.NewServer(config.Protocol, config.Addr)
+	ser := server.NewServer(config.Protocol, fmt.Sprintf("0.0.0.0:%d", info.Port))
 	ser.Config.HTTPPath = config.HTTP.Path
 	ser.Config.WSPath = config.WS.Path
 	ser.Config.WSCompress = config.WS.Compress

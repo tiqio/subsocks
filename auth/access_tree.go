@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	acc "github.com/luyuhuang/subsocks/control/access"
+	"github.com/luyuhuang/subsocks/control/rule"
 	srv "github.com/luyuhuang/subsocks/control/service"
 	"github.com/luyuhuang/subsocks/log"
 )
@@ -54,6 +55,18 @@ func (accessTree *AccessTree) FillInfo() {
 		}
 		accessTree.ServiceTrees[svcIdx] = service
 	}
+}
+
+func (accessTree *AccessTree) ListRule() []rule.Info {
+	var ruleInfos []rule.Info
+
+	for _, service := range accessTree.ServiceTrees {
+		accessInfo := service.Accesses[0].AccessInfo
+		ruleInfo := rule.NewInfo(accessInfo, service.ServiceInfo, "P")
+		ruleInfos = append(ruleInfos, *ruleInfo)
+	}
+
+	return ruleInfos
 }
 
 func (jwtInfo *JWTInfo) AccessTree() AccessTree {

@@ -11,6 +11,10 @@ import (
 
 	"github.com/luyuhuang/subsocks/auth"
 	"github.com/luyuhuang/subsocks/client"
+	"github.com/luyuhuang/subsocks/control/access"
+	"github.com/luyuhuang/subsocks/control/rule"
+	"github.com/luyuhuang/subsocks/control/service"
+	llog "github.com/luyuhuang/subsocks/log"
 	"github.com/luyuhuang/subsocks/utils"
 	"github.com/pelletier/go-toml"
 )
@@ -59,33 +63,58 @@ func launchClient(t *toml.Tree, jwtInfo *auth.JWTInfo) {
 		cli.Config.Verify = utils.VerifyByMap(m)
 	}
 
-	switch rules := t.Get("rules").(type) {
-	case string:
-		r, err := client.NewRulesFromFile(rules)
-		if err != nil {
-			log.Fatalf("Load rule file failed: %s", err)
+	/*
+		switch rules := t.Get("rules").(type) {
+		case string:
+			r, err := client.NewRulesFromFile(rules)
+			if err != nil {
+				log.Fatalf("Load rule file failed: %s", err)
+			}
+			cli.Rules = r
+		case *toml.Tree:
+			m := make(map[string]string)
+			if err := rules.Unmarshal(&m); err != nil {
+				log.Fatalf("Parse 'client.rules' configuration failed: %s", err)
+			}
+			r, err := client.NewRulesFromMap(m)
+			if err != nil {
+				log.Fatalf("Load rules file failed: %s", err)
+			}
+			cli.Rules = r
 		}
-		cli.Rules = r
-	case *toml.Tree:
-		m := make(map[string]string)
-		if err := rules.Unmarshal(&m); err != nil {
-			log.Fatalf("Parse 'client.rules' configuration failed: %s", err)
-		}
-		r, err := client.NewRulesFromMap(m)
-		if err != nil {
-			log.Fatalf("Load rules file failed: %s", err)
-		}
-		cli.Rules = r
-	}
+	*/
 
-	if needsTLS[config.Server.Protocol] {
-		tlsConfig, err := getClientTLSConfig(config.Server.Addr, config.TLS.CA, config.TLS.SkipVerify)
-		if err != nil {
-			log.Fatalf("Get TLS configuration failed: %s", err)
-		}
-		cli.TLSConfig = tlsConfig
-	}
+	// set proxy rules from services(jwtInfo ——> accessTree ——> services), others are direct
+	accessTree := jwtInfo.AccessTree()
+	ruleInfos := accessTree.ListRule()
+	llog.Info("Hook service rules from [ JWT ——> jwtInfo ——> accessTree ——> rules ]", "proxy rules", ruleInfos)
 
+	// TODO:just focus on host now, don't mind port
+	m := make(map[string]*rule.Info)
+	for _, ruleInfo := range ruleInfos {
+		m[ruleInfo.ServiceInfo.Host] = &ruleInfo
+	}
+	m["*"] = rule.NewInfo(access.Info{}, service.Info{}, "D")
+	r, err := client.NewRulesFromStructMap(m)
+	if err != nil {
+		log.Fatalf("Load rules file failed: %s", err)
+	}
+	cli.Rules = r
+	llog.Info("Get Rules from map(services: proxy, others: direct)", "rules", r)
+
+	// TODO:ignore tls config first
+	/*
+		if needsTLS[config.Server.Protocol] {
+			tlsConfig, err := getClientTLSConfig(config.Server.Addr, config.TLS.CA, config.TLS.SkipVerify)
+			if err != nil {
+				log.Fatalf("Get TLS configuration failed: %s", err)
+			}
+			cli.TLSConfig = tlsConfig
+		}
+	*/
+
+	cli.JWTInfo = jwtInfo
+	cli.AccessTree = &accessTree
 	if err := cli.Serve(); err != nil {
 		log.Fatalf("Launch client failed: %s", err)
 	}

@@ -76,7 +76,7 @@ func (c *Client) httpHandler(conn net.Conn) {
 
 	var nextHop net.Conn
 	var isProxy bool
-	if rule := c.Rules.getRule(host); rule == ruleProxy {
+	if rule := c.Rules.getRule(host); rule.Level == ruleProxy {
 		log.Printf(`[http] dial server to connect %s for %s`, addr, conn.RemoteAddr())
 
 		isProxy = true
@@ -92,7 +92,7 @@ func (c *Client) httpHandler(conn net.Conn) {
 
 		nextHop, err = net.Dial("tcp", addr)
 		if err != nil {
-			if rule == ruleAuto {
+			if rule.Level == ruleAuto {
 				log.Printf(`[http] dial %s failed, dial server for %s`, addr, conn.RemoteAddr())
 
 				isProxy = true
