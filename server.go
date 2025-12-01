@@ -42,7 +42,7 @@ func launchServer(t *toml.Tree, jwtInfo *auth.JWTInfo) {
 		log.Fatalf("Parse '[server]' configuration failed: %s", err)
 	}
 
-	metadata := jwtInfo.AccessTokenClaims.GetMetadata()
+	metadata := jwtInfo.IDTokenClaims.GetMetadata()
 	info, err := acc.GetInfoById(metadata.Id)
 	if err != nil {
 		log.Fatalf("Get access info failed: %s", err)

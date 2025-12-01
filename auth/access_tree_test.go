@@ -355,7 +355,7 @@ func TestAccessTree_ListService(t *testing.T) {
 		},
 	}
 
-	services := accessTree.ListService()
+	services := accessTree.ListServices()
 
 	expectedService := []srv.Info{
 		{

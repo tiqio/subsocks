@@ -39,6 +39,16 @@ func (accessTree *AccessTree) HasService(serviceId string) bool {
 	return exists
 }
 
+func (accessTree *AccessTree) ListServices() []srv.Info {
+	var serviceInfos []srv.Info
+
+	for _, serviceTree := range accessTree.ServiceTrees {
+		serviceInfos = append(serviceInfos, serviceTree.ServiceInfo)
+	}
+
+	return serviceInfos
+}
+
 func (accessTree *AccessTree) FillInfo() {
 	for svcIdx, service := range accessTree.ServiceTrees {
 		if service.Id == "" {
@@ -83,7 +93,7 @@ func (jwtInfo *JWTInfo) AccessTree() AccessTree {
 		ServiceTrees: make([]ServiceTree, 0),
 	}
 
-	for _, accessInfo := range jwtInfo.AccessTokenClaims.GetAccessInfos() {
+	for _, accessInfo := range jwtInfo.IDTokenClaims.GetAccessInfos() {
 		for _, service := range accessInfo.Services {
 			if accessTree.HasService(service.Id) {
 				for idx, serviceTree := range accessTree.ServiceTrees {
