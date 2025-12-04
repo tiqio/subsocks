@@ -12,7 +12,6 @@ import (
 	"github.com/luyuhuang/subsocks/auth"
 	"github.com/luyuhuang/subsocks/client"
 	"github.com/luyuhuang/subsocks/control/rule"
-	llog "github.com/luyuhuang/subsocks/log"
 	"github.com/luyuhuang/subsocks/utils"
 	"github.com/pelletier/go-toml"
 )
@@ -86,9 +85,6 @@ func launchClient(t *toml.Tree, jwtInfo *auth.JWTInfo) {
 	accessTree := jwtInfo.AccessTree()
 	accessTree.FillInfo()
 	ruleInfos := accessTree.ListRule()
-	llog.Info("Before hook", "jwtInfo", jwtInfo)
-	llog.Info("Before hook", "accessTree", accessTree)
-	llog.Info("Hook service rules from [ JWT ——> jwtInfo ——> accessTree ——> rules ]", "proxy rules", ruleInfos)
 
 	// TODO:just focus on host now, don't mind port
 	m := make(map[string]*rule.Info)
@@ -96,13 +92,11 @@ func launchClient(t *toml.Tree, jwtInfo *auth.JWTInfo) {
 		ruleInfoCopy := ruleInfo
 		m[ruleInfo.ServiceInfo.Host] = &ruleInfoCopy
 	}
-	llog.Info("After hook", "m", m)
 	r, err := client.NewRulesFromStructMap(m)
 	if err != nil {
 		log.Fatalf("Load rules file failed: %s", err)
 	}
 	cli.Rules = r
-	llog.Info("Get Rules from map(services: proxy, others: direct)", "rules", r)
 
 	// TODO:ignore tls config first
 	/*

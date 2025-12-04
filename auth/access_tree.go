@@ -1,12 +1,12 @@
 package auth
 
 import (
+	"log"
 	"sort"
 
 	acc "github.com/luyuhuang/subsocks/control/access"
 	"github.com/luyuhuang/subsocks/control/rule"
 	srv "github.com/luyuhuang/subsocks/control/service"
-	"github.com/luyuhuang/subsocks/log"
 )
 
 type AccessTree struct {
@@ -56,14 +56,14 @@ func (accessTree *AccessTree) FillInfo() {
 		}
 		svcInfo, err := srv.GetInfoById(service.Id)
 		if err != nil {
-			log.Error("GetInfoById failed", service.Id, err)
+			log.Printf("GetInfoById failed for service ID %s: %v\n", service.Id, err)
 			return
 		}
 		service.ServiceInfo = svcInfo
 		for accIdx, access := range service.Accesses {
 			accInfo, err := acc.GetInfoById(access.Id)
 			if err != nil {
-				log.Error("GetInfoById failed", access.Id, err)
+				log.Printf("GetInfoById failed for access ID %s: %v\n", access.Id, err)
 				return
 			}
 			access.AccessInfo = accInfo
@@ -82,7 +82,7 @@ func (accessTree *AccessTree) ListRule() []rule.Info {
 		ruleInfos = append(ruleInfos, *ruleInfo)
 	}
 
-	log.Info("ListRule", "ruleInfos", ruleInfos)
+	log.Printf("ListRule: ruleInfos: %+v\n", ruleInfos)
 
 	return ruleInfos
 }

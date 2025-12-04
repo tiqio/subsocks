@@ -18,7 +18,6 @@ import (
 	"github.com/pelletier/go-toml"
 
 	acc "github.com/luyuhuang/subsocks/control/access"
-	llog "github.com/luyuhuang/subsocks/log"
 )
 
 func launchServer(t *toml.Tree, jwtInfo *auth.JWTInfo) {
@@ -47,8 +46,6 @@ func launchServer(t *toml.Tree, jwtInfo *auth.JWTInfo) {
 	if err != nil {
 		log.Fatalf("Get access info failed: %s", err)
 	}
-
-	llog.Info("Hook access address from JWT metadata", "info", info)
 
 	//ser := server.NewServer(config.Protocol, config.Addr)
 	ser := server.NewServer(config.Protocol, fmt.Sprintf("0.0.0.0:%d", info.Port))

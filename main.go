@@ -3,12 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 
 	"github.com/luyuhuang/subsocks/auth"
 	"github.com/luyuhuang/subsocks/client"
 	acc "github.com/luyuhuang/subsocks/control/access"
 	"github.com/luyuhuang/subsocks/control/rule"
-	"github.com/luyuhuang/subsocks/log"
 	"github.com/luyuhuang/subsocks/server"
 )
 
@@ -35,35 +35,52 @@ func main() {
 
 	if accessFlag {
 		Prefix = "[Access Mode]"
-		log.Info(Prefix, "subsocks starting...")
+		log.Println(Prefix + " subsocks starting...")
 	} else {
 		Prefix = "[Client Mode]"
-		log.Info(Prefix, "subsocks starting...")
+		log.Println(Prefix + " subsocks starting...")
 	}
 
 	if username == "" {
-		log.Error(Prefix, "subsocks param [username] is empty")
+		log.Println(Prefix + " subsocks param [username] is empty")
 		return
 	}
 
 	if password == "" {
-		log.Error(Prefix, "param [password] is empty")
+		log.Println(Prefix + " param [password] is empty")
 		return
 	}
 
 	jwtInfo, err := auth.GetJWTInfo(TOKEN_URL, username, password, PROJECT_ID)
 	if err != nil {
-		log.Error(Prefix, "Get JWT failed, token_url:", TOKEN_URL, "error:", err)
+		log.Printf("%s Get JWT failed, token_url: %s, error: %v\n", Prefix, TOKEN_URL, err)
 		return
 	}
 
 	if err = jwtInfo.GetIDTokenClaims(); err != nil {
-		log.Error(Prefix, "load ID token claims failed, error:", err)
+		log.Printf("%s load ID token claims failed, error: %v\n", Prefix, err)
 		return
 	}
 
 	if accessFlag {
-		cli := client.NewClient(fmt.Sprintf("127.0.0.1:%d", LISTEN_PORT))
+		metadata := jwtInfo.IDTokenClaims.GetMetadata()
+		log.Printf("%s metadata: %+v\n", Prefix, metadata) // {Id:Windows11 Type:client}
+		info, err := acc.GetInfoById(metadata.Id)
+		if err != nil {
+			log.Printf("%s Get access info failed, error: %v\n", Prefix, err)
+			return
+		}
+
+		log.Printf("%s Get access info success, info: %+v\n", Prefix, info)
+
+		ser := server.NewServer(PROTOCOL, fmt.Sprintf("0.0.0.0:%s", ACCESS_PORT))
+		ser.Config.HTTPPath = HTTP_PATH
+
+		if err := ser.Serve(); err != nil {
+			log.Printf("%s Launch server failed, error: %v\n", Prefix, err)
+		}
+	} else {
+		cli := client.NewClient(fmt.Sprintf("127.0.0.1:%s", LISTEN_PORT))
 		cli.Config.ServerProtocol = PROTOCOL
 		cli.Config.HTTPPath = HTTP_PATH
 
@@ -79,7 +96,7 @@ func main() {
 
 		r, err := client.NewRulesFromStructMap(m)
 		if err != nil {
-			log.Error(Prefix, "Load rules failed, error:", err)
+			log.Printf("%s Load rules failed, error: %v\n", Prefix, err)
 			return
 		}
 
@@ -87,23 +104,7 @@ func main() {
 		cli.JWTInfo = jwtInfo
 		cli.AccessTree = &accessTree
 		if err = cli.Serve(); err != nil {
-			log.Error(Prefix, "Launch client failed, error:", err)
-		}
-	} else {
-		metadata := jwtInfo.IDTokenClaims.GetMetadata()
-		info, err := acc.GetInfoById(metadata.Id)
-		if err != nil {
-			log.Error(Prefix, "Get access info failed, error", err)
-			return
-		}
-
-		log.Info(Prefix, "Get access info success, info:", info)
-
-		ser := server.NewServer(PROTOCOL, fmt.Sprintf("0.0.0.0:%d", ACCESS_PORT))
-		ser.Config.HTTPPath = HTTP_PATH
-
-		if err := ser.Serve(); err != nil {
-			log.Error(Prefix, "Launch server failed, error:", err)
+			log.Printf("%s Launch client failed, error: %v\n", Prefix, err)
 		}
 	}
 }

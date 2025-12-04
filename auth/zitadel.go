@@ -5,18 +5,17 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
-
-	"github.com/luyuhuang/subsocks/log"
 )
 
 func getEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
-		log.Error(fmt.Sprintf("Environment variable %s is not set. Exiting...", key))
+		log.Printf("Environment variable %s is not set. Exiting...\n", key)
 	} else {
-		log.Info("Environment variable found", key, value)
+		log.Printf("Environment variable found: %s = %s\n", key, value)
 	}
 	return value
 }
@@ -38,7 +37,8 @@ func GetJWTInfo(zitadelTokenUrl string, clientId string, clientSecret string, pr
 	// Create a new request
 	req, err := http.NewRequest("POST", zitadelTokenUrl, bytes.NewBuffer([]byte(data)))
 	if err != nil {
-		log.Error("Error creating request")
+		log.Println("Error creating request:", err)
+		return nil, err
 	}
 
 	// Set the headers

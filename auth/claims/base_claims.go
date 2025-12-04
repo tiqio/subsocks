@@ -3,12 +3,12 @@ package claims
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"sync"
 
+	"log"
+
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/luyuhuang/subsocks/log"
 )
 
 type BaseClaims struct {
@@ -38,13 +38,12 @@ func (b *BaseClaims) ParseClaims() {
 				}
 				decodedAccessInfo, err := base64.StdEncoding.DecodeString(accessInfoStr)
 				if err != nil {
-					log.Debug("decode accessinfo", "metadataMap['accessinfo']", metadataMap["accessinfo"].(string))
-					log.Error("decode accessinfo error", "err", err)
+					log.Printf("decode accessinfo: metadataMap['accessinfo'] = %s\n", metadataMap["accessinfo"].(string))
+					log.Printf("decode accessinfo error: err = %v\n", err)
 				} else {
 					if err := json.Unmarshal(decodedAccessInfo, &accessinfos); err != nil {
-						log.Debug("accessinfo parse error", "err", err)
+						log.Printf("accessinfo parse error: err = %v\n", err)
 					} else {
-						//log.Debug("unmarshal accessinfo", "accessinfo", accessinfo)
 						b.SetAccessInfos(accessinfos)
 					}
 				}
@@ -56,13 +55,12 @@ func (b *BaseClaims) ParseClaims() {
 				}
 				decodedMetadata, err := base64.StdEncoding.DecodeString(metadataStr)
 				if err != nil {
-					log.Debug("decode metadata", "metadataMap['metadata']", metadataMap["metadata"].(string))
-					log.Error("decode metadata error", "err", err)
+					log.Printf("decode metadata: metadataMap['metadata'] = %s\n", metadataMap["metadata"].(string))
+					log.Printf("decode metadata error: err = %v\n", err)
 				} else {
 					if err := json.Unmarshal(decodedMetadata, &metadata); err != nil {
-						log.Debug("metadata parse error", "err", err)
+						log.Printf("metadata parse error: err = %v\n", err)
 					} else {
-						//log.Debug("unmarshal metadata", "metadata", metadata)
 						b.SetMetadata(metadata)
 					}
 				}
@@ -75,16 +73,15 @@ func (b *BaseClaims) ParseClaims() {
 				}
 				decodedEndpoints, err := base64.StdEncoding.DecodeString(endpointsStr)
 				if err != nil {
-					log.Debug("decode endpoints", "metadataMap['endpoints']", metadataMap["endpoints"].(string))
-					log.Error("decode endpoints error", "err", err)
+					log.Printf("decode endpoints: metadataMap['endpoints'] = %s\n", metadataMap["endpoints"].(string))
+					log.Printf("decode endpoints error: err = %v\n", err)
 				} else {
 					if err := json.Unmarshal(decodedEndpoints, &endpointIds); err != nil {
-						log.Debug("endpoints parse error", "err", err)
+						log.Printf("endpoints parse error: err = %v\n", err)
 					} else {
 						for _, endpointId := range endpointIds {
 							endpoints = append(endpoints, Endpoint{Id: endpointId})
 						}
-						//log.Debug("unmarshal endpoints", "endpoints", endpoints)
 						b.SetEndpoints(endpoints)
 					}
 				}
@@ -92,7 +89,7 @@ func (b *BaseClaims) ParseClaims() {
 
 			return
 		} else {
-			log.Error("access Debugs parse error")
+			log.Println("access Debugs parse error")
 			return
 		}
 	})
@@ -101,50 +98,50 @@ func (b *BaseClaims) ParseClaims() {
 func (b *BaseClaims) PrintJWTClaims() {
 	expirationTime, err := b.claims.GetExpirationTime()
 	if err != nil {
-		log.Error("expirationTime parse error", "err", err)
+		log.Printf("expirationTime parse error: err = %v\n", err)
 		return
 	} else {
-		log.Debug(fmt.Sprintf("expirationTime is %+v", expirationTime))
+		log.Printf("expirationTime is %+v\n", expirationTime)
 	}
 
 	audience, err := b.claims.GetAudience()
 	if err != nil {
-		log.Error("audience parse error", "err", err)
+		log.Printf("audience parse error: err = %v\n", err)
 		return
 	} else {
-		log.Debug(fmt.Sprintf("audience is %+v", audience))
+		log.Printf("audience is %+v\n", audience)
 	}
 
 	issuedAt, err := b.claims.GetIssuedAt()
 	if err != nil {
-		log.Error("issuedAt parse error", "err", err)
+		log.Printf("issuedAt parse error: err = %v\n", err)
 		return
 	} else {
-		log.Debug(fmt.Sprintf("issuedAt is %+v", issuedAt))
+		log.Printf("issuedAt is %+v\n", issuedAt)
 	}
 
 	notBefore, err := b.claims.GetNotBefore()
 	if err != nil {
-		log.Error("notBefore parse error", "err", err)
+		log.Printf("notBefore parse error: err = %v\n", err)
 		return
 	} else {
-		log.Debug(fmt.Sprintf("notBefore is %+v", notBefore))
+		log.Printf("notBefore is %+v\n", notBefore)
 	}
 
 	issuer, err := b.claims.GetIssuer()
 	if err != nil {
-		log.Error("issuer parse error", "err", err)
+		log.Printf("issuer parse error: err = %v\n", err)
 		return
 	} else {
-		log.Debug(fmt.Sprintf("issuer is %+v", issuer))
+		log.Printf("issuer is %+v\n", issuer)
 	}
 
 	subject, err := b.claims.GetSubject()
 	if err != nil {
-		log.Error("subject parse error", "err", err)
+		log.Printf("subject parse error: err = %v\n", err)
 		return
 	} else {
-		log.Debug(fmt.Sprintf("subject is %+v", subject))
+		log.Printf("subject is %+v\n", subject)
 	}
 }
 

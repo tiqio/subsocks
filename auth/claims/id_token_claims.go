@@ -2,7 +2,6 @@ package claims
 
 import (
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/luyuhuang/subsocks/log"
 )
 
 type IDTokenClaims struct {
@@ -16,6 +15,5 @@ func NewIDTokenClaims(claims *jwt.MapClaims) *IDTokenClaims {
 }
 
 func (i *IDTokenClaims) PrintJWTClaims() {
-	log.Info("ID Token Claims", "metadata", i.GetMetadata())
 	i.BaseClaims.PrintJWTClaims()
 }

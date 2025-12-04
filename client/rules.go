@@ -13,7 +13,6 @@ import (
 	"github.com/luyuhuang/subsocks/control/access"
 	"github.com/luyuhuang/subsocks/control/rule"
 	"github.com/luyuhuang/subsocks/control/service"
-	llog "github.com/luyuhuang/subsocks/log"
 )
 
 const (
@@ -83,7 +82,6 @@ func NewRulesFromStructMap(rules map[string]*rule.Info) (*Rules, error) {
 	r.otherInfo = rule.NewInfo(access.Info{}, service.Info{}, "D")
 
 	for addr, ruleInfo := range rules {
-		llog.Info("NewRulesFromStructMap", "getRuleInfo", *ruleInfo)
 		ruleLevel, ok := ruleString2Rule[ruleInfo.Rule]
 		if !ok {
 			return nil, fmt.Errorf("ruleInfo of %q got %s, want proxy|direct|auto|P|D|A", addr, ruleInfo.Rule)
@@ -114,7 +112,6 @@ func (r *Rules) loadCache() error {
 }
 
 func setRule(ipv4Tree, ipv6Tree *ipNode, domainTree *domainNode, other *rule.Info, addr string, rule *rule.Info) error {
-	llog.Info("setRule", "addr", addr)
 	if addr == "*" {
 		// * default is O, and can be set by ruleInfo(D)
 		other = rule
@@ -209,8 +206,6 @@ func setIPRule(root *ipNode, ip []byte, length int, rule *rule.Info) {
 }
 
 func setDomainRule(p *domainNode, domain string, rule *rule.Info) error {
-	llog.Info("setDomainRule", "domain", domain)
-	llog.Info("setRule in DomainRule", "rule", rule)
 	if i := strings.IndexByte(domain, '*'); i != 0 && i != -1 ||
 		strings.Count(domain, "*") > 1 {
 		return fmt.Errorf("Domain %q contains illegal wildcards", domain)
@@ -234,7 +229,6 @@ func setDomainRule(p *domainNode, domain string, rule *rule.Info) error {
 			p.children[part] = newDomainNode()
 		}
 		ruleCopy := *rule
-		llog.Info("setDomainRule", "part", part)
 		p.children[part].ruleInfo = &ruleCopy
 	}
 
@@ -283,8 +277,6 @@ func (r *Rules) getRule(addr string) (ruleInfo *rule.Info) {
 			if p == nil {
 				break
 			}
-
-			llog.Info("getRule", "p.ruleInfo", p.ruleInfo)
 
 			if p.wild || i == 0 {
 				if p.ruleInfo.Level != ruleNone {
